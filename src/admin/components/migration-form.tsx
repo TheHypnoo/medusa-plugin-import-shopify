@@ -4,11 +4,10 @@ import { z } from "zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { sdk } from "../lib/sdk"
 
-type MigrationType = "category" | "product"
 
 const schema = z.object({
   type: z.enum(["category", "product"]).array()
-})
+
 
 export const MigrationForm = () => {
   const queryClient = useQueryClient()
