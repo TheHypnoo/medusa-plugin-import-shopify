@@ -1,9 +1,9 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
-import { migrateCollectionsFromShopify, migrateProductsFromShopify } from "../workflows"
+import { migrateCategoriesFromShopify, migrateProductsFromShopify } from "../workflows"
 import { promiseAll } from "@medusajs/framework/utils"
 
 type Payload = {
-  type: ("product" | "collection")[]
+  type: ("product" | "category")[]
 }
 
 export default async function migrateShopifyHandler({
@@ -18,9 +18,9 @@ export default async function migrateShopifyHandler({
           logger.info("Migrating products from Shopify...")
           await migrateProductsFromShopify(container).run()
           break
-        case "collection":
-          logger.info("Migrating collections from Shopify...")
-          await migrateCollectionsFromShopify(container).run()
+        case "category":
+          logger.info("Migrating categories from Shopify...")
+          await migrateCategoriesFromShopify(container).run()
           break
         default:
           console.log(`Unknown type: ${type}`)

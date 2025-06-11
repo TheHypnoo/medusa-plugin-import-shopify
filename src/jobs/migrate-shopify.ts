@@ -6,7 +6,7 @@ export default async function migrateShopifyJob(container: MedusaContainer) {
   eventBusService.emit({
     name: "migrate.shopify",
     data: {
-      type: ["product", "collection"],
+      type: ["product", "category"],
     },
   })
 }

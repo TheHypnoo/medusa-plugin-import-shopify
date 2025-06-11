@@ -2,7 +2,7 @@ import { defineMiddlewares, validateAndTransformBody } from "@medusajs/framework
 import { z } from "zod"
 
 export const AdminShopifyMigrationsPost = z.object({
-  type: z.enum(["collection", "product"]).array()
+  type: z.enum(["category", "product"]).array()
 })
 
 export default defineMiddlewares({

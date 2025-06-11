@@ -1,5 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { migrateCollectionsFromShopifyWorkflowId, migrateProductsFromShopifyWorkflowId } from "../../../../workflows"
+import { migrateCategoriesFromShopifyWorkflowId, migrateProductsFromShopifyWorkflowId } from "../../../../workflows"
 import { z } from "zod"
 import { AdminShopifyMigrationsPost } from "../../../middlewares"
 
@@ -8,7 +8,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
   const [executions, count] = await workflowEngine.listAndCountWorkflowExecutions(
     {
-      workflow_id: [migrateCollectionsFromShopifyWorkflowId, migrateProductsFromShopifyWorkflowId],
+      workflow_id: [migrateCategoriesFromShopifyWorkflowId, migrateProductsFromShopifyWorkflowId],
     },
     {
       order: {

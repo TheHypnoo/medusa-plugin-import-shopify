@@ -65,4 +65,5 @@ Join our [Discord server](https://discord.com/invite/medusajs) to meet other com
 
 ## Test it Out
 
-After building and linking the plugin in a Medusa project, open the Medusa Admin at `http://localhost:9000/app`. A new sidebar item "Shopify Migration" should appear. Click on it to run product or collection migrations from Shopify.
+
+After building and linking the plugin in a Medusa project, open the Medusa Admin at `http://localhost:9000/app`. A new sidebar item "Shopify Migration" should appear. Click on it to run product or category migrations from Shopify.

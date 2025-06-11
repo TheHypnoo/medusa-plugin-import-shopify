@@ -4,17 +4,16 @@ import { z } from "zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { sdk } from "../lib/sdk"
 
-type MigrationType = "collection" | "product"
 
 const schema = z.object({
-  type: z.enum(["collection", "product"]).array()
-})
+  type: z.enum(["category", "product"]).array()
+
 
 export const MigrationForm = () => {
   const queryClient = useQueryClient()
   const form = useForm<z.infer<typeof schema>>({
     defaultValues: {
-      type: ["product", "collection"],
+      type: ["product", "category"],
     },
   })
 
@@ -71,13 +70,13 @@ export const MigrationForm = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
-                        id="collection"
-                        checked={field.value.includes("collection")}
+                        id="category"
+                        checked={field.value.includes("category")}
                         onCheckedChange={() => {
-                          onCheckboxChange("collection")
+                          onCheckboxChange("category")
                         }}
                       />
-                      <Label htmlFor="collection">Collection</Label>
+                      <Label htmlFor="category">Category</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
