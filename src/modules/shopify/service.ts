@@ -33,6 +33,12 @@ export type ShopifyProduct = {
   variants: ShopifyVariant[];
 };
 
+export type ShopifyCollection = {
+  id: string;
+  title: string;
+  handle: string;
+};
+
 type ModuleOptions = {
   storeDomain: string;
   adminToken: string;
@@ -199,5 +205,57 @@ export default class ShopifyService {
     }
 
     return products;
+  }
+
+  /**
+   * Obtiene todas las colecciones de Shopify.
+   */
+  async getCollections(): Promise<ShopifyCollection[]> {
+    const collections: ShopifyCollection[] = [];
+    let hasNextPage = true;
+    let cursor: string | null = null;
+
+    while (hasNextPage) {
+      const response = await this.shopifyClient.request<any>(
+        `query GetCollections($cursor: String) {
+          collections(first: 50, after: $cursor) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            edges {
+              node {
+                id
+                title
+                handle
+              }
+            }
+          }
+        }`,
+        {
+          variables: cursor ? { cursor } : {},
+        }
+      );
+
+      if (!response.data) {
+        throw new Error("No data received from Shopify API");
+      }
+
+      const collectionData = response.data.collections;
+
+      for (const edge of collectionData.edges) {
+        const collection = edge.node;
+        collections.push({
+          id: collection.id,
+          title: collection.title,
+          handle: collection.handle,
+        });
+      }
+
+      hasNextPage = collectionData.pageInfo.hasNextPage;
+      cursor = collectionData.pageInfo.endCursor;
+    }
+
+    return collections;
   }
 }
