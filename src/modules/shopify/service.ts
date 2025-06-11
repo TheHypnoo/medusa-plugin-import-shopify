@@ -127,7 +127,7 @@ export default class ShopifyService {
       } else if (op?.status === "FAILED") {
         throw new Error(`Bulk operation failed: ${op.errorCode}`);
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, POLLING_DELAY_MS));
       }
     }
     if (!url) {
