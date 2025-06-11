@@ -33,6 +33,13 @@ export type ShopifyProduct = {
   variants: ShopifyVariant[];
 };
 
+export type ShopifyCategory = {
+  id: string;
+  title: string;
+  handle: string;
+  productIds: string[];
+};
+
 type ModuleOptions = {
   storeDomain: string;
   adminToken: string;
@@ -99,105 +106,81 @@ export default class ShopifyService {
     });
   }
 
+  protected async runBulkOperation(query: string): Promise<any[]> {
+    await this.shopifyClient.request(
+      `mutation RunBulk($query: String!) {\n        bulkOperationRunQuery(query: $query) {\n          bulkOperation { id status }\n          userErrors { message }\n        }\n      }`,
+      {
+        variables: { query },
+      }
+    );
+
+    let completed = false;
+    let url: string | null = null;
+    while (!completed) {
+      const res = await this.shopifyClient.request<any>(
+        `query { currentBulkOperation { status url errorCode } }`
+      );
+      const op = res.data.currentBulkOperation;
+      if (op?.status === "COMPLETED") {
+        url = op.url;
+        completed = true;
+      } else if (op?.status === "FAILED") {
+        throw new Error(`Bulk operation failed: ${op.errorCode}`);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
+    if (!url) {
+      return [];
+    }
+    const response = await fetch(url);
+    const text = await response.text();
+    return text
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((l) => JSON.parse(l));
+  }
+
   /**
    * Obtiene todos los productos de Shopify, incluyendo variantes e imágenes.
    */
   async getProducts(): Promise<ShopifyProduct[]> {
-    const products: ShopifyProduct[] = [];
-    let hasNextPage = true;
-    let cursor: string | null = null;
+    const rows = await this.runBulkOperation(`{ products { edges { node { id title descriptionHtml images(first: 100) { edges { node { id url altText } } } variants(first: 100) { edges { node { id title sku price inventoryQuantity } } } } } } }`);
 
-    while (hasNextPage) {
-      const response = await this.shopifyClient.request<ShopifyGraphQLResponse>(
-        `query GetProducts($cursor: String) {
-          products(first: 50, after: $cursor) {
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            edges {
-              node {
-                id
-                title
-                descriptionHtml
-                images(first: 10) {
-                  edges {
-                    node {
-                      id
-                      url
-                      altText
-                    }
-                  }
-                }
-                variants(first: 10) {
-                  edges {
-                    node {
-                      id
-                      title
-                      sku
-                      price
-                      inventoryQuantity
-                      metafields(first: 100) {
-                        edges {
-                          node {
-                            id
-                            namespace
-                            key
-                            value
-                            type
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }`,
-        {
-          variables: cursor ? { cursor } : {},
-        }
-      );
+    return rows.map((p: any) => {
+      return {
+        id: p.id,
+        title: p.title,
+        descriptionHtml: p.descriptionHtml,
+        images: p.images.edges.map((img: any) => ({
+          id: img.node.id,
+          url: img.node.url,
+          altText: img.node.altText,
+        })),
+        variants: p.variants.edges.map((variant: any) => ({
+          id: variant.node.id,
+          title: variant.node.title,
+          sku: variant.node.sku,
+          price: variant.node.price,
+          inventoryQuantity: variant.node.inventoryQuantity,
+          metafields: [],
+        })),
+      } as ShopifyProduct;
+    });
+  }
 
-      if (!response.data) {
-        throw new Error("No data received from Shopify API");
-      }
+  /**
+   * Obtiene todas las categorías (colecciones) de Shopify junto con los productos asociados.
+   */
+  async getCategories(): Promise<ShopifyCategory[]> {
+    const rows = await this.runBulkOperation(`{ collections { edges { node { id title handle products(first: 250) { edges { node { id } } } } } } }`);
 
-      const productData = response.data.products;
-
-      for (const edge of productData.edges) {
-        const product = edge.node;
-        products.push({
-          id: product.id,
-          title: product.title,
-          descriptionHtml: product.descriptionHtml,
-          images: product.images.edges.map((img: any) => ({
-            id: img.node.id,
-            url: img.node.url,
-            altText: img.node.altText,
-          })),
-          variants: product.variants.edges.map((variant: any) => ({
-            id: variant.node.id,
-            title: variant.node.title,
-            sku: variant.node.sku,
-            price: variant.node.price,
-            inventoryQuantity: variant.node.inventoryQuantity,
-            metafields: variant.node.metafields.edges.map((metafield: any) => ({
-              id: metafield.node.id,
-              namespace: metafield.node.namespace,
-              key: metafield.node.key,
-              value: metafield.node.value,
-              type: metafield.node.type,
-            })),
-          })),
-        });
-      }
-
-      hasNextPage = productData.pageInfo.hasNextPage;
-      cursor = productData.pageInfo.endCursor;
-    }
-
-    return products;
+    return rows.map((c: any) => ({
+      id: c.id,
+      title: c.title,
+      handle: c.handle,
+      productIds: c.products.edges.map((p: any) => p.node.id),
+    }));
   }
 }
