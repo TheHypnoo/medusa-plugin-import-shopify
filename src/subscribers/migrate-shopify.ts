@@ -27,8 +27,6 @@ export default async function migrateShopifyHandler({
       }
     })
   )
-
-  console.log("Finished migration from Shopify")
 }
 
 export const config: SubscriberConfig = {

@@ -1,21 +1,22 @@
-import { Button, Checkbox, Drawer, Label, toast } from "@medusajs/ui"
-import { useForm, FormProvider, Controller } from "react-hook-form"
-import { z } from "zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { sdk } from "../lib/sdk"
+import { Button, Checkbox, Drawer, Label, toast } from "@medusajs/ui";
+import { useForm, FormProvider, Controller } from "react-hook-form";
+import { z } from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { sdk } from "../lib/sdk";
 
+type MigrationType = "category" | "product";
 
 const schema = z.object({
-  type: z.enum(["category", "product"]).array()
-
+  type: z.enum(["category", "product"]).array(),
+});
 
 export const MigrationForm = () => {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof schema>>({
     defaultValues: {
       type: ["product", "category"],
     },
-  })
+  });
 
   const { mutateAsync } = useMutation({
     mutationFn: () =>
@@ -28,17 +29,17 @@ export const MigrationForm = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["shopify"],
-      })
-      toast.success("Migration started")
+      });
+      toast.success("Migration started");
     },
     onError: (e) => {
-      toast.error(e.message)
+      toast.error(e.message);
     },
-  })
+  });
 
   const handleSubmit = form.handleSubmit(async () => {
-    await mutateAsync()
-  })
+    await mutateAsync();
+  });
 
   const onCheckboxChange = (type: MigrationType) => {
     form.setValue(
@@ -46,13 +47,16 @@ export const MigrationForm = () => {
       form.getValues().type.includes(type)
         ? (form.getValues().type.filter((v) => v !== type) as MigrationType[])
         : ([...form.getValues().type, type] as MigrationType[])
-    )
-  }
+    );
+  };
 
   return (
     <Drawer.Content>
       <FormProvider {...form}>
-        <form onSubmit={handleSubmit} className="flex h-full flex-col overflow-hidden">
+        <form
+          onSubmit={handleSubmit}
+          className="flex h-full flex-col overflow-hidden"
+        >
           <Drawer.Header>
             <Drawer.Title>Migrate Data from Shopify</Drawer.Title>
           </Drawer.Header>
@@ -73,7 +77,7 @@ export const MigrationForm = () => {
                         id="category"
                         checked={field.value.includes("category")}
                         onCheckedChange={() => {
-                          onCheckboxChange("category")
+                          onCheckboxChange("category");
                         }}
                       />
                       <Label htmlFor="category">Category</Label>
@@ -83,13 +87,13 @@ export const MigrationForm = () => {
                         id="product"
                         checked={field.value.includes("product")}
                         onCheckedChange={() => {
-                          onCheckboxChange("product")
+                          onCheckboxChange("product");
                         }}
                       />
                       <Label htmlFor="product">Product</Label>
                     </div>
                   </div>
-                )
+                );
               }}
             />
           </Drawer.Body>
@@ -110,5 +114,5 @@ export const MigrationForm = () => {
         </form>
       </FormProvider>
     </Drawer.Content>
-  )
-}
+  );
+};
