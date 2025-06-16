@@ -46,6 +46,7 @@ export const migrateProductsFromShopify = createWorkflow(
             handle: `${shopifyProduct.title.toLowerCase().replace(/\s+/g, "-")}-${shopifyProduct.id}`,
             external_id: shopifyProduct.id,
             sales_channels: [{ id: data.stores[0].default_sales_channel_id }],
+            options: shopifyProduct.options.map((o) => ({ title: o.name, values: o.values })),
             images: shopifyProduct.images.map((img) => ({
               url: img.url,
               metadata: { external_id: img.id },
@@ -58,6 +59,7 @@ export const migrateProductsFromShopify = createWorkflow(
                 id: existingVariant?.id,
                 title: variant.title,
                 sku: variant.sku || undefined,
+                options: Object.fromEntries(variant.selectedOptions.map((so) => [so.name, so.value])),
                 prices: data.stores[0].supported_currencies.map(({ currency_code }) => ({
                   amount: parseFloat(variant.price),
                   currency_code,

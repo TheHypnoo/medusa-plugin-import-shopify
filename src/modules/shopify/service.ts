@@ -16,6 +16,7 @@ type ShopifyVariant = {
   sku: string | null;
   price: string;
   inventoryQuantity: number | null;
+  selectedOptions: Array<{ name: string; value: string }>;
   metafields: Array<{
     id: string;
     namespace: string;
@@ -29,6 +30,7 @@ export type ShopifyProduct = {
   id: string;
   title: string;
   descriptionHtml: string | null;
+  options: Array<{ name: string; values: string[] }>;
   images: ShopifyImage[];
   variants: ShopifyVariant[];
 };
@@ -73,6 +75,10 @@ const BULK_OPERATION_QUERY_PRODUCTS = `
         id
         title
         descriptionHtml
+        options {
+          name
+          values
+        }
         images {
           edges {
             node { id url altText __parentId: id }
@@ -86,6 +92,7 @@ const BULK_OPERATION_QUERY_PRODUCTS = `
               sku
               price
               inventoryQuantity
+              selectedOptions { name value }
               metafields {
                 edges {
                   node { id namespace key value type __parentId: id }
@@ -275,6 +282,7 @@ export default class ShopifyService {
       id: p.id,
       title: p.title,
       descriptionHtml: p.descriptionHtml,
+      options: p.options || [],
       images: p.images.edges.map((img: any) => ({
         id: img.node.id,
         url: img.node.url,
@@ -286,6 +294,7 @@ export default class ShopifyService {
         sku: v.node.sku,
         price: v.node.price,
         inventoryQuantity: v.node.inventoryQuantity,
+        selectedOptions: v.node.selectedOptions || [],
         metafields:
           v.node.metafields?.edges?.map((mf: any) => ({
             id: mf.node.id,
