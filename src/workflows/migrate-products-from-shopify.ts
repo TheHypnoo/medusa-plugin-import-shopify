@@ -1,9 +1,23 @@
-import { createWorkflow, transform, WorkflowResponse } from "@medusajs/framework/workflows-sdk"
-import { CreateProductWorkflowInputDTO, UpsertProductDTO } from "@medusajs/framework/types"
-import { createProductsWorkflow, updateProductsWorkflow, useQueryGraphStep } from "@medusajs/medusa/core-flows"
-import { getShopifyProductsStep } from "./steps/get-shopify-products"
+import {
+  createWorkflow,
+  transform,
+  WorkflowResponse,
+} from "@medusajs/framework/workflows-sdk";
+import {
+  CreateProductWorkflowInputDTO,
+  UpsertProductDTO,
+  ProductStatus,
+  CreateProductDTO,
+} from "@medusajs/framework/types";
+import {
+  createProductsWorkflow,
+  updateProductsWorkflow,
+  useQueryGraphStep,
+} from "@medusajs/medusa/core-flows";
+import { getShopifyProductsStep } from "./steps/get-shopify-products";
 
-export const migrateProductsFromShopifyWorkflowId = "migrate-products-from-shopify"
+export const migrateProductsFromShopifyWorkflowId =
+  "migrate-products-from-shopify";
 
 export const migrateProductsFromShopify = createWorkflow(
   {
@@ -12,87 +26,117 @@ export const migrateProductsFromShopify = createWorkflow(
     store: true,
   },
   () => {
-    const products = getShopifyProductsStep()
+    // const products = getShopifyProductsStep();
 
     const { data: stores } = useQueryGraphStep({
       entity: "store",
       fields: ["supported_currencies.*", "default_sales_channel_id"],
       pagination: { take: 1, skip: 0 },
-    })
+    });
 
-
-    const externalIdFilters = transform({ products }, (data) => {
-      return data.products.map((p) => p.id)
-    })
+    /*     const externalIdFilters = transform({ products }, (data) => {
+      return data.products.map((p) => p.id);
+    });
 
     const { data: existingProducts } = useQueryGraphStep({
       entity: "product",
       fields: ["id", "external_id", "variants.id", "variants.metadata"],
       filters: { external_id: externalIdFilters },
-    }).config({ name: "get-existing-products" })
+    }).config({ name: "get-existing-products" });
+ */
+    /*
 
     const { productsToCreate, productsToUpdate } = transform(
       { products, stores, existingProducts },
       (data) => {
-        const toCreate = new Map<string, CreateProductWorkflowInputDTO>()
-        const toUpdate = new Map<string, UpsertProductDTO>()
+        const toCreate: CreateProductWorkflowInputDTO[] = [];
+        const toUpdate: UpsertProductDTO[] = [];
 
         data.products.forEach((shopifyProduct) => {
-          const existing = data.existingProducts.find((p) => p.external_id === shopifyProduct.id)
-          const productData: CreateProductWorkflowInputDTO | UpsertProductDTO = {
-            title: shopifyProduct.title,
-            description: shopifyProduct.descriptionHtml || undefined,
-            status: "published",
-            handle: `${shopifyProduct.title.toLowerCase().replace(/\s+/g, "-")}-${shopifyProduct.id}`,
-            external_id: shopifyProduct.id,
+          const existing = data.existingProducts.find(
+            (p) => p.external_id === shopifyProduct.id.split("/").pop()
+          );
+          const productData: CreateProductWorkflowInputDTO = {
+            title: shopifyProduct.title || "Title not found",
+            description: shopifyProduct.descriptionHtml?.toString() || "",
+            /* options: shopifyProduct.options.map((option) => ({
+              title: option.name,
+              values: option.values,
+            })), */
+    /*
+            status: "published" as ProductStatus,
+            handle:
+              `${shopifyProduct.title
+                .toLowerCase()
+                .replace(/\s+/g, "-")}-${shopifyProduct.id.split("/").pop()}` ||
+              "Handle not found",
+            external_id:
+              shopifyProduct.id.split("/").pop() || "External ID not found",
             sales_channels: [{ id: data.stores[0].default_sales_channel_id }],
-            options: shopifyProduct.options.map((o) => ({ title: o.name, values: o.values })),
-            images: shopifyProduct.images.map((img) => ({
+            /* images: shopifyProduct.images.map((img) => ({
               url: img.url,
               metadata: { external_id: img.id },
-            })),
-            variants: shopifyProduct.variants.map((variant) => {
+            })), */
+    /*  variants: shopifyProduct.variants.map((variant) => {
               const existingVariant = existing?.variants.find(
                 (v) => v.metadata?.external_id === variant.id
-              )
+              );
               return {
                 id: existingVariant?.id,
                 title: variant.title,
                 sku: variant.sku || undefined,
-                options: Object.fromEntries(variant.selectedOptions.map((so) => [so.name, so.value])),
-                prices: data.stores[0].supported_currencies.map(({ currency_code }) => ({
-                  amount: parseFloat(variant.price),
-                  currency_code,
-                })),
+                options: Object.fromEntries(
+                  variant.selectedOptions.map((so) => [so.name, so.value])
+                ),
+                prices: data.stores[0].supported_currencies.map(
+                  ({ currency_code }) => ({
+                    amount: parseFloat(variant.price),
+                    currency_code,
+                  })
+                ),
                 inventory_quantity: variant.inventoryQuantity ?? 0,
                 metadata: { external_id: variant.id },
-              }
-            }),
-          }
+              };
+            }), */
+    /*
+          };
 
           if (existing) {
-            productData.id = existing.id
-            toUpdate.set(existing.id, productData as UpsertProductDTO)
+            productData.id = existing.id;
+            toUpdate.push(productData as UpsertProductDTO);
           } else {
-            toCreate.set(shopifyProduct.id, productData as CreateProductWorkflowInputDTO)
+            toCreate.push(productData as CreateProductWorkflowInputDTO);
           }
-        })
+        });
 
         return {
-          productsToCreate: Array.from(toCreate.values()),
-          productsToUpdate: Array.from(toUpdate.values()),
-        }
+          productsToCreate: toCreate,
+          productsToUpdate: [],
+        };
       }
-    )
+    );
+
+    */
 
     createProductsWorkflow.runAsStep({
-      input: { products: productsToCreate },
-    })
+      input: {
+        products: [
+          {
+            title: "T-shirt test",
+            description: "Description test",
+            status: "published" as ProductStatus,
+            handle: "t-shirt-test",
+            external_id: "1234567890",
+            sales_channels: [{ id: stores[0].default_sales_channel_id }],
+          },
+        ],
+      },
+    });
 
-    updateProductsWorkflow.runAsStep({
+    /*  updateProductsWorkflow.runAsStep({
       input: { products: productsToUpdate },
-    })
+    }); */
 
-    return new WorkflowResponse({ count: products.length })
+    return new WorkflowResponse({ count: 1 });
   }
-)
+);
