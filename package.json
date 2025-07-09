@@ -1,8 +1,8 @@
 {
   "name": "medusa-plugin-import-shopify",
-  "version": "0.0.1",
-  "description": "A starter for Medusa plugins.",
-  "author": "Medusa (https://medusajs.com)",
+  "version": "0.0.2",
+  "description": "A plugin to import products from Shopify to Medusa.",
+  "author": "TheHypnoo (https://github.com/TheHypnoo/medusa-plugin-import-shopify)",
   "license": "MIT",
   "files": [
     ".medusa/server"
@@ -13,6 +13,11 @@
     "./.medusa/server/src/modules/*": "./.medusa/server/src/modules/*/index.js",
     "./modules/*": "./.medusa/server/src/modules/*/index.js",
     "./providers/*": "./.medusa/server/src/providers/*/index.js",
+    "./admin": {
+      "import": "./.medusa/server/src/admin/index.mjs",
+      "require": "./.medusa/server/src/admin/index.js",
+      "default": "./.medusa/server/src/admin/index.js"
+    },
     "./*": "./.medusa/server/src/*.js"
   },
   "keywords": [
@@ -20,7 +25,9 @@
     "plugin",
     "medusa-plugin-other",
     "medusa-plugin",
-    "medusa-v2"
+    "medusa-v2",
+    "shopify",
+    "medusa-shopify"
   ],
   "scripts": {
     "build": "medusa plugin:build",
@@ -28,13 +35,13 @@
     "prepublishOnly": "medusa plugin:build"
   },
   "devDependencies": {
-    "@medusajs/admin-sdk": "2.4.0",
-    "@medusajs/cli": "2.4.0",
-    "@medusajs/framework": "2.4.0",
-    "@medusajs/medusa": "2.4.0",
-    "@medusajs/test-utils": "2.4.0",
-    "@medusajs/ui": "4.0.4",
-    "@medusajs/icons": "2.4.0",
+    "@medusajs/admin-sdk": "2.8.7",
+    "@medusajs/cli": "2.8.7",
+    "@medusajs/framework": "2.8.7",
+    "@medusajs/icons": "2.8.7",
+    "@medusajs/medusa": "2.8.7",
+    "@medusajs/test-utils": "2.8.7",
+    "@medusajs/ui": "4.0.17",
     "@mikro-orm/cli": "6.4.3",
     "@mikro-orm/core": "6.4.3",
     "@mikro-orm/knex": "6.4.3",
@@ -55,13 +62,13 @@
     "yalc": "^1.0.0-pre.53"
   },
   "peerDependencies": {
-    "@medusajs/admin-sdk": "2.4.0",
-    "@medusajs/cli": "2.4.0",
-    "@medusajs/framework": "2.4.0",
-    "@medusajs/test-utils": "2.4.0",
-    "@medusajs/medusa": "2.4.0",
-    "@medusajs/ui": "4.0.3",
-    "@medusajs/icons": "2.4.0",
+    "@medusajs/admin-sdk": "^2.7.0",
+    "@medusajs/cli": "^2.7.0",
+    "@medusajs/framework": "^2.7.0",
+    "@medusajs/icons": "^2.7.0",
+    "@medusajs/medusa": "^2.7.0",
+    "@medusajs/test-utils": "^2.7.0",
+    "@medusajs/ui": "^4.0.17",
     "@mikro-orm/cli": "6.4.3",
     "@mikro-orm/core": "6.4.3",
     "@mikro-orm/knex": "6.4.3",
@@ -74,6 +81,9 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@shopify/admin-api-client": "^1.1.0"
+    "@aws-sdk/client-s3": "^3.842.0",
+    "@aws-sdk/lib-storage": "^3.842.0",
+    "@shopify/admin-api-client": "^1.1.0",
+    "axios": "^1.10.0"
   }
 }

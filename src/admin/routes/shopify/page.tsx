@@ -20,7 +20,7 @@ const columns = [
     cell: ({ getValue }) => {
       const state = getValue()
       return (
-        <Badge color={state === "done" ? "green" : state === "failed" ? "red" : "grey"} size="xsmall">
+        <Badge color={state === "done" ? "green" : state === "reverted" ? "red" : "grey"} size="xsmall">
           {state}
         </Badge>
       )
