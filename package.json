@@ -1,6 +1,6 @@
 {
   "name": "medusa-plugin-import-shopify",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A plugin to import products from Shopify to Medusa.",
   "author": "TheHypnoo (https://github.com/TheHypnoo/medusa-plugin-import-shopify)",
   "license": "MIT",
