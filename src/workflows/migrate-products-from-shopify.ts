@@ -114,6 +114,14 @@ export const migrateProductsFromShopify = createWorkflow(
                   shopifyProduct.metafields,
                   "verified"
                 ),
+                verified_video: getStringFromMetafield(
+                  shopifyProduct.metafields,
+                  "verified_video"
+                ),
+                product_video: getStringFromMetafield(
+                  shopifyProduct.metafields,
+                  "product_video"
+                ),
               },
               variants: shopifyProduct.variants.map((variant) => ({
                 title: variant.title,
@@ -158,22 +166,24 @@ export const migrateProductsFromShopify = createWorkflow(
                     variant.metafields,
                     "fabric"
                   ),
-                  box_width: getFloatFromMetafield(
-                    variant.metafields,
-                    "box_width"
-                  ),
-                  box_height: getFloatFromMetafield(
-                    variant.metafields,
-                    "box_height"
-                  ),
-                  box_length: getFloatFromMetafield(
-                    variant.metafields,
-                    "box_length"
-                  ),
-                  box_weight: getFloatFromMetafield(
-                    variant.metafields,
-                    "box_weight"
-                  ),
+                  box: {
+                    width: getFloatFromMetafield(
+                      variant.metafields,
+                      "box_width"
+                    ),
+                    height: getFloatFromMetafield(
+                      variant.metafields,
+                      "box_height"
+                    ),
+                    length: getFloatFromMetafield(
+                      variant.metafields,
+                      "box_length"
+                    ),
+                    weight: getFloatFromMetafield(
+                      variant.metafields,
+                      "box_weight"
+                    ),
+                  },
                 },
                 options: Object.fromEntries(
                   variant.selectedOptions.map((so) => [so.name, so.value])
