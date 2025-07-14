@@ -137,23 +137,25 @@ export const migrateProductsFromShopify = createWorkflow(
                   variant.metafields,
                   "material"
                 ),
-                width: getFloatFromMetafield(
-                  variant.metafields,
-                  "product_width"
-                ),
-                length: getFloatFromMetafield(
-                  variant.metafields,
-                  "product_length"
-                ),
-                height: getFloatFromMetafield(
-                  variant.metafields,
-                  "product_height"
-                ),
-                weight: getFloatFromMetafield(
-                  variant.metafields,
-                  "product_weight"
-                ),
                 metadata: {
+                  product: {
+                    width: getFloatFromMetafield(
+                      variant.metafields,
+                      "product_width"
+                    ),
+                    length: getFloatFromMetafield(
+                      variant.metafields,
+                      "product_length"
+                    ),
+                    height: getFloatFromMetafield(
+                      variant.metafields,
+                      "product_height"
+                    ),
+                    weight: getFloatFromMetafield(
+                      variant.metafields,
+                      "product_weight"
+                    ),
+                  },
                   pa_code: getStringFromMetafield(
                     variant.metafields,
                     "pa_code"

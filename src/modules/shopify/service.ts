@@ -212,7 +212,7 @@ export default class ShopifyService {
         }
       });
 
-      // SEGUNDA PASADA: asociar imágenes, variantes, metafields y colecciones
+      // SEGUNDA PASADA: asociar imágenes, variantes y colecciones
       lines.forEach((line) => {
         const item = JSON.parse(line);
         if (item.__parentId !== undefined) {
@@ -230,16 +230,29 @@ export default class ShopifyService {
                 title: item.title,
                 description: item.description ?? null,
               });
-            } else if (item.id.includes("Metafield")) {
-              // Buscar en variantes o en el producto
-              const variantParent = parent.variants.find(
-                (v: any) => v.id === item.__parentId
-              );
-              if (variantParent) {
-                variantParent.metafields[item.key] = item.value;
-              } else {
-                parent.metafields[item.key] = item.value;
-              }
+            }
+          }
+        }
+      });
+
+      // TERCERA PASADA: asociar metafields a productos o variantes
+      lines.forEach((line) => {
+        const item = JSON.parse(line);
+        if (item.__parentId !== undefined && item.id.includes("Metafield")) {
+          // Buscar el producto padre
+          for (const [productId, product] of productsMap.entries()) {
+            // Buscar en las variantes del producto
+            const variantParent = product.variants.find(
+              (v: any) => v.id === item.__parentId
+            );
+            if (variantParent) {
+              // Es metafield de variante
+              variantParent.metafields[item.key] = item.value;
+              break;
+            } else if (productId === item.__parentId) {
+              // Es metafield de producto
+              product.metafields[item.key] = item.value;
+              break;
             }
           }
         }

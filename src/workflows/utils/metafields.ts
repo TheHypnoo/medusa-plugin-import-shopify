@@ -8,7 +8,7 @@ export const getFloatFromMetafield = (
   key: string
 ): number | undefined => {
   const value = metafields[key];
-  if (value) {
+  if (value !== undefined && value !== null) {
     const parsed = parseFloat(value);
     return isNaN(parsed) ? undefined : parsed;
   }
@@ -23,12 +23,10 @@ export const getBooleanFromMetafield = (
   key: string
 ): boolean | undefined => {
   const value = metafields[key];
-  if (value) {
-    return (
-      value.toLowerCase() === "true" ||
-      value.toLowerCase() === "yes" ||
-      value.toLowerCase() === "1"
-    );
+  if (value !== undefined && value !== null) {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "yes", "1"].includes(normalized)) return true;
+    if (["false", "no", "0"].includes(normalized)) return false;
   }
   return undefined;
 };
