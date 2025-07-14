@@ -527,8 +527,7 @@ export default class ShopifyService {
   async getCategories(): Promise<ShopifyCategory[]> {
     const rows = await this.runBulkOperation(
       BULK_OPERATION_QUERY_CATEGORIES,
-      "categories",
-      "https://storage.googleapis.com/shopify-tiers-assets-prod-us-east1/bulk-operation-outputs/dl8o0g37xt7ywnrp0rs64tjwqnrk-final?GoogleAccessId=assets-us-prod%40shopify-tiers.iam.gserviceaccount.com&Expires=1752483224&Signature=n2i1YUngtaL%2F88GZeH9MrdwY89f1qld0O0Su50hwnp28bE%2BsOe7XGog1q6bcjjRPVPY0IRaZxNqocSMKFFMJ8ZHkNkDZDSgq8JoxmZkuRoTdO9CgWgRrNJJi%2F5MeOnPImUR8C%2FCVOs0odmknjn6o7s0NvGG%2FnLfEvTrNB00tO3p%2F2AA10hbFWdEN4tQWktEBdDCaSwv4UE13jXsMnd6M8wdGjnHR9F3EL0HwQdyDfagk4bl8BgPv%2BK3eY08YhfgZ6jX8My78HGNaUeKwopb%2F0%2Fvy6O3cFv07Fdh%2F67VEZdpAokaaELUV16BC5V2FnQPZK4J9JIb7uuN6qNw5bt1Peg%3D%3D&response-content-disposition=attachment%3B+filename%3D%22bulk-7104269844826.jsonl%22%3B+filename%2A%3DUTF-8%27%27bulk-7104269844826.jsonl&response-content-type=application%2Fjsonl"
+      "categories"
     );
     console.log("Categories length: ", rows.length);
 
