@@ -98,6 +98,10 @@ export const migrateProductsFromShopify = createWorkflow(
                 shopifyProduct.status === "DRAFT"
                   ? ("draft" as ProductStatus)
                   : ("published" as ProductStatus),
+              subtitle: getStringFromMetafield(
+                shopifyProduct.metafields,
+                "bx_code"
+              ),
               external_id:
                 shopifyProduct.id.split("/").pop() || "External ID not found",
               sales_channels: [{ id: data.stores[0].default_sales_channel_id }],
