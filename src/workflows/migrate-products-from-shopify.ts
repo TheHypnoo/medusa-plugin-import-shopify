@@ -5,8 +5,8 @@ import {
 } from "@medusajs/framework/workflows-sdk";
 import {
   CreateProductWorkflowInputDTO,
-  UpsertProductDTO,
   ProductStatus,
+  UpdateProductWorkflowInputDTO,
 } from "@medusajs/framework/types";
 import {
   createProductsWorkflow,
@@ -36,7 +36,7 @@ export const migrateProductsFromShopify = createWorkflow(
       entity: "store",
       fields: ["supported_currencies.*", "default_sales_channel_id"],
       pagination: { take: 1, skip: 0 },
-    });
+    }).config({ name: "get-stores" });
 
     const categoryExternalIds = transform(
       {
@@ -66,82 +66,99 @@ export const migrateProductsFromShopify = createWorkflow(
     }).config({ name: "get-categories" });
 
     const externalIdFilters = transform({ products }, (data) => {
-      return data.products.map((p) => p.id);
+      return data.products.map((p) => p.id.split("/").pop());
     });
 
     const { data: existingProducts } = useQueryGraphStep({
       entity: "product",
-      fields: ["id", "external_id", "variants.id", "variants.metadata"],
+      fields: [
+        "id",
+        "external_id",
+        "variants.id",
+        "variants.metadata",
+        "variants.sku",
+      ],
       filters: { external_id: externalIdFilters },
     }).config({ name: "get-existing-products" });
 
-    const { productsToCreate, productsToUpdate } = transform(
+    const { productsToCreate = [], productsToUpdate = [] } = transform(
       { products, stores, existingProducts, categories },
       (data) => {
         const toCreate: CreateProductWorkflowInputDTO[] = [];
-        const toUpdate: UpsertProductDTO[] = [];
+        const toUpdate: UpdateProductWorkflowInputDTO[] = [];
 
         data.products.forEach((shopifyProduct) => {
           const existing = data.existingProducts.find(
             (p) => p.external_id === shopifyProduct.id.split("/").pop()
           );
 
-          const productData: CreateProductWorkflowInputDTO | UpsertProductDTO =
-            {
-              title: shopifyProduct.title,
-              description: shopifyProduct.description || "",
-              options: shopifyProduct.options.map((option) => ({
-                title: option.name,
-                values: option.values,
-              })),
-              status:
-                shopifyProduct.status === "DRAFT"
-                  ? ("draft" as ProductStatus)
-                  : ("published" as ProductStatus),
-              subtitle: getStringFromMetafield(
+          const productData:
+            | CreateProductWorkflowInputDTO
+            | UpdateProductWorkflowInputDTO = {
+            id: existing?.id || undefined,
+            title: shopifyProduct.title,
+            description: shopifyProduct.description || "",
+            options: shopifyProduct.options.map((option) => ({
+              title: option.name,
+              values: option.values,
+            })),
+            status:
+              shopifyProduct.status === "DRAFT"
+                ? ("draft" as ProductStatus)
+                : ("published" as ProductStatus),
+            subtitle: getStringFromMetafield(
+              shopifyProduct.metafields,
+              "bx_code"
+            ),
+            external_id: shopifyProduct.id.split("/").pop(),
+            sales_channels: [{ id: data.stores[0].default_sales_channel_id }],
+            images: shopifyProduct.images.map((img) => ({
+              url: img.url,
+              metadata: { external_id: img.id },
+            })),
+            metadata: {
+              ...existing?.metadata,
+              bx_code: getStringFromMetafield(
                 shopifyProduct.metafields,
                 "bx_code"
               ),
-              external_id:
-                shopifyProduct.id.split("/").pop() || "External ID not found",
-              sales_channels: [{ id: data.stores[0].default_sales_channel_id }],
-              images: shopifyProduct.images.map((img) => ({
-                url: img.url,
-                metadata: { external_id: img.id },
-              })),
-              metadata: {
-                bx_code: getStringFromMetafield(
-                  shopifyProduct.metafields,
-                  "bx_code"
-                ),
-                b2box_verified: getBooleanFromMetafield(
-                  shopifyProduct.metafields,
-                  "verified"
-                ),
-                verified_video: getStringFromMetafield(
-                  shopifyProduct.metafields,
-                  "verified_video"
-                ),
-                product_video: getStringFromMetafield(
-                  shopifyProduct.metafields,
-                  "product_video"
-                ),
-              },
-              variants: shopifyProduct.variants.map((variant) => ({
+              b2box_verified: getBooleanFromMetafield(
+                shopifyProduct.metafields,
+                "verified"
+              ),
+              verified_video: getStringFromMetafield(
+                shopifyProduct.metafields,
+                "verified_video"
+              ),
+              product_video: getStringFromMetafield(
+                shopifyProduct.metafields,
+                "product_video"
+              ),
+            },
+            variants: shopifyProduct.variants.map((variant) => {
+              const existingVariant = existing?.variants?.find(
+                (v) => v.sku === variant.sku
+              );
+
+              return {
+                id: existingVariant?.id || undefined,
                 title: variant.title,
-                sku: variant.sku || undefined,
+                sku: variant?.sku || undefined,
                 manage_inventory: false,
-                prices: data.stores[0].supported_currencies.map(
-                  ({ currency_code }) => ({
-                    amount: parseFloat(variant.price),
-                    currency_code,
-                  })
-                ),
+                prices:
+                  existingVariant?.prices ||
+                  data.stores[0].supported_currencies.map(
+                    ({ currency_code }) => ({
+                      amount: parseFloat(variant.price),
+                      currency_code,
+                    })
+                  ),
                 material: getStringFromMetafield(
                   variant.metafields,
                   "material"
                 ),
                 metadata: {
+                  ...existingVariant?.metadata,
                   product: {
                     width: getFloatFromMetafield(
                       variant.metafields,
@@ -194,20 +211,20 @@ export const migrateProductsFromShopify = createWorkflow(
                 options: Object.fromEntries(
                   variant.selectedOptions.map((so) => [so.name, so.value])
                 ),
-              })),
-              category_ids: shopifyProduct?.collections
-                ?.map(
-                  (c) =>
-                    data.categories?.find(
-                      (cat) => cat.metadata.external_id === c.id
-                    )?.id
-                )
-                ?.filter(Boolean),
-            };
+              };
+            }),
+            category_ids: shopifyProduct?.collections
+              ?.map(
+                (c) =>
+                  data.categories?.find(
+                    (cat) => cat.metadata.external_id === c.id
+                  )?.id
+              )
+              ?.filter(Boolean),
+          };
 
           if (existing) {
-            productData.id = existing.id;
-            toUpdate.push(productData as UpsertProductDTO);
+            toUpdate.push(productData as UpdateProductWorkflowInputDTO);
           } else {
             toCreate.push(productData as CreateProductWorkflowInputDTO);
           }
