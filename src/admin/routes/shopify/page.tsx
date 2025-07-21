@@ -1,12 +1,23 @@
-import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { ArrowDownTray } from "@medusajs/icons"
-import { Badge, Button, Container, DataTable, Drawer, Heading, Toaster, createDataTableColumnHelper, useDataTable } from "@medusajs/ui"
-import { HttpTypes } from "@medusajs/framework/types"
-import { useQuery } from "@tanstack/react-query"
-import { sdk } from "../../lib/sdk"
-import { MigrationForm } from "../../components/migration-form"
+import { defineRouteConfig } from "@medusajs/admin-sdk";
+import { ArrowDownTray } from "@medusajs/icons";
+import {
+  Badge,
+  Button,
+  Container,
+  DataTable,
+  Drawer,
+  Heading,
+  Toaster,
+  createDataTableColumnHelper,
+  useDataTable,
+} from "@medusajs/ui";
+import { HttpTypes } from "@medusajs/framework/types";
+import { useQuery } from "@tanstack/react-query";
+import { sdk } from "../../lib/sdk";
+import { MigrationForm } from "../../components/migration-form";
 
-const columnHelper = createDataTableColumnHelper<HttpTypes.AdminWorkflowExecution>()
+const columnHelper =
+  createDataTableColumnHelper<HttpTypes.AdminWorkflowExecution>();
 
 const columns = [
   columnHelper.accessor("id", {
@@ -18,36 +29,47 @@ const columns = [
   columnHelper.accessor("state", {
     header: "State",
     cell: ({ getValue }) => {
-      const state = getValue()
+      const state = getValue();
       return (
-        <Badge color={state === "done" ? "green" : state === "reverted" ? "red" : "grey"} size="xsmall">
+        <Badge
+          color={
+            state === "done" ? "green" : state === "reverted" ? "red" : "grey"
+          }
+          size="xsmall"
+        >
           {state}
         </Badge>
-      )
+      );
     },
   }),
   columnHelper.accessor("created_at", {
     header: "Date",
     cell: ({ getValue }) => {
-      const date = new Date(getValue())
-      return date.toLocaleDateString()
+      const date = new Date(getValue());
+      return date.toLocaleDateString();
     },
   }),
-]
+];
 
 const CustomPage = () => {
-  const { data, isLoading } = useQuery<{ workflow_executions: HttpTypes.AdminWorkflowExecution[]; count: number }>({
+  const { data, isLoading } = useQuery<{
+    workflow_executions: HttpTypes.AdminWorkflowExecution[];
+    count: number;
+  }>({
     queryFn: async () => sdk.client.fetch("/admin/shopify/migrations"),
     queryKey: ["shopify"],
-  })
+  });
 
   const table = useDataTable({
     columns,
     data: data?.workflow_executions || [],
     getRowId: (row) => row.id,
+    onRowClick: (_event, row) => {
+      window.location.href = `/app/settings/workflows/${row.id}`;
+    },
     rowCount: data?.count || 0,
     isLoading,
-  })
+  });
 
   return (
     <Container className="divide-y p-0">
@@ -67,12 +89,12 @@ const CustomPage = () => {
       </DataTable>
       <Toaster />
     </Container>
-  )
-}
+  );
+};
 
 export const config = defineRouteConfig({
   label: "Shopify Migration",
   icon: ArrowDownTray,
-})
+});
 
-export default CustomPage
+export default CustomPage;
